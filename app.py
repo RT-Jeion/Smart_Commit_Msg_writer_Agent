@@ -7,6 +7,7 @@ import subprocess
 
 
 def get_diff():
+    staging = subprocess.run(["git", "add", "."])
     print("Git Changes Staged")
     result = subprocess.run(["git", "diff", "--staged"], capture_output=True, text=True)
 
