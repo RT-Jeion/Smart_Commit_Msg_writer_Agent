@@ -17,25 +17,34 @@ def get_diff():
     return result.stdout
 
 
+system_prompt = """
+You generate Git commit messages from a provided `git diff`.
+
+Rules:
+
+* Use Conventional Commits: `type: description`
+* Types: feat, fix, refactor, perf, test, docs, style, chore, build, ci
+* Infer the main purpose of the changes.
+* Use imperative mood.
+* Keep it concise, ideally under 72 characters.
+* Don't invent details.
+* Return ONLY the commit message. No explanation, quotes, or markdown.
+
+Example:
+`feat: add user authentication`
+`fix: handle empty API responses`
+`refactor: simplify database connection`
+
+"""
+
+
 def generate_commit(diff):
     client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     diff_msg = [
         {
             "role": "system",
-            "content": """
-            You are a commit writer agent from Git dff. and Give only the commit message don't give extra things
-            Here is a example:
-                feat: add environment handling and commit‑writer script
-
-                - Add a `.env` file to store the Groq API key (`GROQ_API_KEY`).
-                - Create a `.gitignore` entry for the virtual environment (`venv/`).
-                - Introduce `app.py`, a small utility that:
-                * Loads environment variables via `python‑dotenv`.
-                * Stages all current changes and captures the staged diff.
-                * Sends the diff to Groq’s LLM (model `openai/gpt‑oss‑120b`) to generate a concise commit message.
-                * Prints token usage statistics and the generated commit message.
-            """,
+            "content": system_prompt,
         },
         {"role": "user", "content": str(diff)},
     ]
