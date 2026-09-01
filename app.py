@@ -1,15 +1,26 @@
-import os
-from dotenv import load_dotenv
+try:
+    import os
+    from dotenv import load_dotenv
 
-load_dotenv()
-from groq import Groq
-import subprocess
+    load_dotenv()
+    from groq import Groq
+    import subprocess
+
+    runner = True
+except Exception as e:
+    print(e)
+    runner = False
+    err = e
 
 
 def get_diff():
     staging = subprocess.run(["git", "add", "."])
     print("Repo Changes Staged.")
-    result = subprocess.run(["git", "diff", "--staged"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["git", "diff", "--staged", "--cached", "--stat"],
+        capture_output=True,
+        text=True,
+    )
 
     if result.returncode != 0:
         print("Current directory is not inside a Git repository.")
@@ -63,22 +74,26 @@ def generate_commit(diff):
 
 
 if __name__ == "__main__":
-    result = get_diff()
-    if result == 0:
-        print("Not a Git Repo")
+    if runner:
+        result = get_diff()
+        if result == 0:
+            print("Not a Git Repo")
+        else:
+            cmt_msg = result[0]
+            input_token = result[1]
+            used_token = result[2]
+            total_token = result[3]
+            print()
+            print("Input Token      :", input_token)
+            print("Output Token     :", used_token)
+            print("Total Token      :", total_token)
+            print("\nCommit Message :", cmt_msg)
+
+            result = subprocess.run(
+                ["git", "commit", "-m", cmt_msg], capture_output=True, text=True
+            )
+
+            print(result.stdout)
     else:
-        cmt_msg = result[0]
-        input_token = result[1]
-        used_token = result[2]
-        total_token = result[3]
-        print()
-        print("Input Token      :", input_token)
-        print("Output Token     :", used_token)
-        print("Total Token      :", total_token)
-        print("\nCommit Message :", cmt_msg)
-
-        result = subprocess.run(
-            ["git", "commit", "-m", cmt_msg], capture_output=True, text=True
-        )
-
-        print(result.stdout)
+        print("No python Modules imported.")
+        print(err)
